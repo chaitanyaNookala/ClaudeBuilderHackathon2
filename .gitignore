@@ -1,13 +1,27 @@
-# Environment variables & local secrets (keep .env.example tracked)
-.env
-.env.*
+# --- Secrets & environment (never commit real keys) ---
+**/.env
+**/.env.*
 !.env.example
 !**/.env.example
+!.env.*.example
+!**/.env.*.example
 
-# Common secret / key filenames
+**/.env.local
+**/.env.*.local
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Key material & credential files
+**/*.pem
+**/*.key
+**/*.p12
+**/*.pfx
 **/secrets.json
 **/credentials.json
 **/*-credentials.json
-**/*.pem
-**/*.key
-!**/*.example.pem
+
+# Optional: local tooling tokens
+.ngrok2/
+*.ngrok

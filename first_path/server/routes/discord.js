@@ -14,7 +14,7 @@ if (!fs.existsSync(PLANS_FILE)) {
 }
 
 router.post('/discord-send', async (req, res) => {
-  const { discord_user_id, plan, sent_at } = req.body;
+  const { discord_user_id, plan, sent_at, phone, career, branch } = req.body;
 
   if (!discord_user_id || !plan) {
     return res.status(400).json({ error: 'Missing discord_user_id or plan' });
@@ -49,7 +49,15 @@ router.post('/discord-send', async (req, res) => {
     await dmChannel.send({ embeds: [embed] });
 
     const plans = JSON.parse(fs.readFileSync(PLANS_FILE, 'utf8'));
-    plans.push({ discord_user_id, plan, sent_at, completed: false });
+    plans.push({
+      discord_user_id,
+      plan,
+      sent_at,
+      completed: false,
+      phone: phone || null,
+      career: career || null,
+      branch: branch || null,
+    });
     fs.writeFileSync(PLANS_FILE, JSON.stringify(plans, null, 2));
 
     await client.destroy();

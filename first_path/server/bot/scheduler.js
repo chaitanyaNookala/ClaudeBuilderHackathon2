@@ -1,4 +1,6 @@
 const cron = require('node-cron');
+const { generateCallScript } = require('../utils/callScriptGenerator');
+const { placeCall } = require('../utils/blandCaller');
 const { Client, GatewayIntentBits, EmbedBuilder } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
@@ -61,6 +63,29 @@ async function runDailyCheckins() {
         }
 
         await dmChannel.send({ embeds: [embed] });
+
+        if (planEntry.phone && planEntry.career) {
+          setTimeout(async () => {
+            try {
+              console.log(`Generating call script for ${planEntry.career} Day ${currentDay}...`);
+              const script = await generateCallScript(
+                planEntry.career,
+                currentDay,
+                planEntry.branch || 'standard'
+              );
+              await placeCall(
+                planEntry.phone,
+                script,
+                planEntry.career,
+                currentDay,
+                planEntry.discord_user_id
+              );
+              console.log(`Call placed for ${planEntry.discord_user_id} Day ${currentDay}`);
+            } catch (callErr) {
+              console.error('Call scheduling error:', callErr.message);
+            }
+          }, 2 * 60 * 60 * 1000);
+        }
 
       } catch (userErr) {
         console.error(`Failed to DM user ${planEntry.discord_user_id}:`, userErr.message);

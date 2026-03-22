@@ -5,6 +5,7 @@ import { CareerDashboard } from './CareerDashboard';
 
 export const ResultScreen = ({ result, accentColor, onSave, onRestart, onFlare, profileData }) => {
   const [discordId, setDiscordId] = useState('');
+  const [phone, setPhone] = useState('');
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [toast, setToast] = useState(null);
@@ -16,11 +17,22 @@ export const ResultScreen = ({ result, accentColor, onSave, onRestart, onFlare, 
     return () => clearTimeout(t);
   }, [toast]);
 
+  if (!result) return null;
+
+  const { careers = [], actions = [], seven_day_plan = [], encouragement = '' } = result;
+
   const handleDiscordSend = async () => {
-    if (!discordId.trim() || sending || sent) return;
+    if (!discordId.trim() || !phone.trim() || sending || sent) return;
     setSending(true);
     try {
-      await sendToDiscord(discordId.trim(), result.seven_day_plan);
+      const topCareer = careers[0]?.title || '';
+      await sendToDiscord(
+        discordId.trim(),
+        result.seven_day_plan,
+        phone.trim(),
+        topCareer,
+        'standard'
+      );
       setSent(true);
       setToast({ message: "Sent! Check your Discord DMs 🎉", type: 'success' });
       if (onFlare) onFlare();
@@ -30,10 +42,6 @@ export const ResultScreen = ({ result, accentColor, onSave, onRestart, onFlare, 
       setSending(false);
     }
   };
-
-  if (!result) return null;
-
-  const { careers = [], actions = [], seven_day_plan = [], encouragement = '' } = result;
 
   return (
     <section data-testid="result-screen" className="relative min-h-screen z-10 px-6 py-24">
@@ -213,6 +221,17 @@ export const ResultScreen = ({ result, accentColor, onSave, onRestart, onFlare, 
               Our AI bot will DM you every morning at 9AM with your day&apos;s task,
               keep you accountable, and check in on how it feels to live this career path.
             </p>
+            <input
+              type="tel"
+              placeholder="Your phone number with country code (e.g. +14805551234)"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              disabled={sent}
+              className="flex-1 px-4 py-3 rounded-xl border border-white/10 bg-white/[0.05]
+                font-sans text-sm text-white placeholder-zinc-600 mb-3
+                focus:outline-none focus:border-white/25 transition-colors duration-300
+                disabled:opacity-40"
+            />
             <div className="flex flex-col sm:flex-row gap-3">
               <input
                 type="text"
@@ -228,11 +247,11 @@ export const ResultScreen = ({ result, accentColor, onSave, onRestart, onFlare, 
               <button
                 type="button"
                 onClick={handleDiscordSend}
-                disabled={!discordId.trim() || sending || sent}
+                disabled={!discordId.trim() || !phone.trim() || sending || sent}
                 className="px-6 py-3 rounded-xl font-sans font-semibold text-sm text-black
                   transition-all duration-300 flex items-center gap-2 whitespace-nowrap
                   disabled:opacity-40 disabled:cursor-not-allowed hover:scale-105"
-                style={{ backgroundColor: (!discordId.trim() || sending || sent) ? '#444' : accentColor }}
+                style={{ backgroundColor: (!discordId.trim() || !phone.trim() || sending || sent) ? '#444' : accentColor }}
               >
                 {sending ? (
                   <>
@@ -246,7 +265,8 @@ export const ResultScreen = ({ result, accentColor, onSave, onRestart, onFlare, 
               </button>
             </div>
             <p className="font-mono text-[10px] text-zinc-600 mt-3">
-              To find your User ID: Discord Settings → Advanced → Enable Developer Mode → right-click your name → Copy User ID
+              Phone: include country code (US = +1). Discord ID: Settings → Advanced →
+              Developer Mode → right-click your name → Copy User ID
             </p>
           </motion.div>
         </motion.div>
