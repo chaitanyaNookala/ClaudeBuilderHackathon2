@@ -24,9 +24,10 @@ const branches = [
   },
 ];
 
-export const BranchSelector = ({ onSelect }) => {
+export const BranchSelector = ({ onSelect, loading = false }) => {
   return (
     <section
+      data-testid="branch-selector-section"
       className="relative min-h-screen flex flex-col items-center justify-center z-10 px-6 py-24"
     >
       <motion.div
@@ -51,8 +52,10 @@ export const BranchSelector = ({ onSelect }) => {
         {branches.map((branch, i) => (
           <motion.button
             key={branch.id}
+            type="button"
+            disabled={loading}
             onClick={() => onSelect(branch.id)}
-            className="relative text-left p-8 rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-xl cursor-pointer group"
+            className="relative text-left p-8 rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-xl cursor-pointer group disabled:opacity-50 disabled:cursor-wait disabled:pointer-events-none"
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}

@@ -4,13 +4,14 @@ import { CloudBackground } from './components/CloudBackground';
 import { FlameGuide } from './components/FlameGuide';
 import { Hero } from './components/Hero';
 import { BranchSelector } from './components/BranchSelector';
+import { UserProfile } from './components/UserProfile';
 import { Journey } from './components/Journey';
 import { GenerateScreen } from './components/GenerateScreen';
 import { ResultScreen } from './components/ResultScreen';
 import AuthPage from './pages/AuthPage';
 import AuthCallback from './pages/AuthCallback';
 import { authApi } from './api/auth';
-import { generateRoadmap, saveJourney } from './api/roadmap';
+import { generateRoadmap } from './api/roadmap';
 import './App.css';
 
 const BRANCH_COLORS = {
@@ -21,15 +22,16 @@ const BRANCH_COLORS = {
 
 function AppContent() {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem('fp_token'));
+  const [, setToken] = useState(localStorage.getItem('fp_token'));
   const [authChecked, setAuthChecked] = useState(false);
   const [selectedBranch, setSelectedBranch] = useState(null);
   const [answers, setAnswers] = useState({});
-  const [currentScreen, setCurrentScreen] = useState('hero');
+  const [currentScreen, setCurrentScreen] = useState('profile');
   const [roadmapResult, setRoadmapResult] = useState(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [flameFlare, setFlameFlare] = useState(false);
+  const [profileData, setProfileData] = useState(null);
 
   useEffect(() => {
     setAuthChecked(true);
@@ -60,10 +62,6 @@ function AppContent() {
     setSelectedBranch(branch);
     setCurrentScreen('chapters');
     triggerFlare();
-    setTimeout(() => {
-      const el = document.querySelector('[data-testid="chapter-01"]');
-      if (el) el.scrollIntoView({ behavior: 'smooth' });
-    }, 100);
   }, [triggerFlare]);
 
   const handleAnswer = useCallback((question, answer) => {
@@ -81,9 +79,13 @@ function AppContent() {
   }, [triggerFlare]);
 
   const handleGenerate = useCallback(async () => {
+    if (!profileData) {
+      console.error('Missing profile for roadmap generation');
+      return;
+    }
     setIsGenerating(true);
     try {
-      const result = await generateRoadmap(answers, selectedBranch, token);
+      const result = await generateRoadmap(answers, selectedBranch, profileData);
       setRoadmapResult(result);
       setCurrentScreen('result');
       triggerFlare();
@@ -96,20 +98,17 @@ function AppContent() {
     } finally {
       setIsGenerating(false);
     }
-  }, [answers, selectedBranch, token, triggerFlare]);
+  }, [answers, selectedBranch, triggerFlare, profileData]);
 
   const handleSave = useCallback(async () => {
-    try {
-      await saveJourney(selectedBranch, answers, roadmapResult, token);
-    } catch (err) {
-      console.error('Save failed:', err);
-    }
-  }, [selectedBranch, answers, roadmapResult, token]);
+    console.info('Save journey — wire to backend when available');
+  }, []);
 
   const handleRestart = useCallback(() => {
     setSelectedBranch(null);
     setAnswers({});
-    setCurrentScreen('hero');
+    setProfileData(null);
+    setCurrentScreen('profile');
     setRoadmapResult(null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
@@ -121,8 +120,9 @@ function AppContent() {
     setToken(null);
     setSelectedBranch(null);
     setAnswers({});
-    setCurrentScreen('hero');
+    setCurrentScreen('profile');
     setRoadmapResult(null);
+    setProfileData(null);
   }, []);
 
   const accentColor = selectedBranch ? BRANCH_COLORS[selectedBranch] : '#e2e8f0';
@@ -166,12 +166,24 @@ function AppContent() {
       </nav>
 
       <main>
+        {currentScreen === 'profile' && !profileData && (
+          <UserProfile
+            onComplete={(data) => {
+              setProfileData(data);
+              setCurrentScreen('hero');
+              window.scrollTo({ top: 0 });
+            }}
+          />
+        )}
         <Hero />
-        {!selectedBranch && <BranchSelector onSelect={handleBranchSelect} />}
+        {!selectedBranch && profileData && (
+          <BranchSelector onSelect={handleBranchSelect} />
+        )}
         {selectedBranch && currentScreen !== 'hero' && (
           <>
             <Journey
               branch={selectedBranch}
+              profileData={profileData}
               accentColor={accentColor}
               answers={answers}
               onAnswer={handleAnswer}
@@ -191,6 +203,8 @@ function AppContent() {
                 accentColor={accentColor}
                 onSave={handleSave}
                 onRestart={handleRestart}
+                onFlare={triggerFlare}
+                profileData={profileData}
               />
             )}
           </>

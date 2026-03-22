@@ -1,5 +1,0 @@
-.env
-node_modules/
-pulsebot.db
-.DS_Store
-*.log

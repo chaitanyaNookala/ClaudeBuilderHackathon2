@@ -15,7 +15,8 @@ export default function AuthCallback() {
       const sessionId = params.get('session_id');
       if (!sessionId) { navigate('/login'); return; }
       try {
-        const user = await authApi.exchangeSession(sessionId);
+        const data = await authApi.exchangeSession(sessionId);
+        const user = data.user ?? data;
         navigate('/', { state: { user }, replace: true });
       } catch {
         navigate('/login');
